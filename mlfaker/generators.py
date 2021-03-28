@@ -1,11 +1,12 @@
-from typing import Sequence, Union
+from typing import Optional, Sequence
 
 import numpy as np
 import pandas as pd
-from faker import Faker
 
 
 class BaseGenerator:
+    """TODO"""
+
     def __init__(self, name: str, fillrate: float):
         self.name = name
         self.fillrate = fillrate
@@ -17,16 +18,19 @@ class BaseGenerator:
     @fillrate.setter
     def fillrate(self, value: float):
         if value < 0 or value > 1:
-            raise ValueError(f"Fillrate must be between 0 and 1")
+            raise ValueError("Fillrate must be between 0 and 1")
         self._fillrate = value
 
     def _nuller(self, sr):
-        if self.fillrate < 1:
+        sr = sr.copy()
+        if self.fillrate != 1:
             sr.loc[sr.sample(frac=1 - self.fillrate).index] = np.NaN
         return sr
 
 
 class NumGenerator(BaseGenerator):
+    """TODO"""
+
     def __init__(
         self, name: str, fillrate: float = 1.0, mu: float = 0.0, sig: float = 1.0
     ):
@@ -44,12 +48,14 @@ class NumGenerator(BaseGenerator):
 
 
 class CatGenerator(BaseGenerator):
+    """TODO"""
+
     def __init__(
         self,
         name: str,
         fillrate: float = 1,
-        classes: Union[Sequence, int] = 2,
-        rates: Sequence = None,
+        classes: Sequence = [0, 1],
+        rates: Optional[Sequence] = None,
     ):
         super().__init__(name, fillrate)
         if rates is not None and len(classes) != len(rates):

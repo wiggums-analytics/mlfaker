@@ -6,7 +6,7 @@ services:
     ports:
       - "127.0.0.1::8888"
     volumes:
-      - ../:/mnt
+      - ./:/mnt
     entrypoint: bash -c "cd /mnt && jupyter lab --NotebookApp.token='' --ip=0.0.0.0 --allow-root && /bin/bash"
     stdin_open: true
     container_name: "mlfaker_jupyter_${USER}"
@@ -16,7 +16,7 @@ services:
     build:
       context: .
     volumes:
-      - ../:/mnt
+      - ./:/mnt
     entrypoint: "/bin/bash"
     stdin_open: true
     container_name: "mlfaker_bash_${USER}"

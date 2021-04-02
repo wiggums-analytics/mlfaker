@@ -43,13 +43,13 @@ format: isort black ## Formats repo; runs black and isort on all files
 	@echo "Formatting complete"
 
 dev-start: ## Primary make command for devs, spins up containers
-	docker-compose -f docker/docker-compose.yml --project-name $(PROJECT) up -d --no-recreate
+	docker-compose -f docker-compose.yml --project-name $(PROJECT) up -d --no-recreate
 
 dev-stop: ## Spin down active containers
-	docker-compose -f docker/docker-compose.yml --project-name $(PROJECT) down
+	docker-compose -f docker-compose.yml --project-name $(PROJECT) down
 
 dev-rebuild: ## Rebuild images for dev containers (useful when Dockerfile/requirements are updated)
-	docker-compose -f docker/docker-compose.yml --project-name $(PROJECT) up -d --build
+	docker-compose -f docker-compose.yml --project-name $(PROJECT) up -d --build
 
 bash: dev-start ## Exec into docker bash terminal
 	docker exec -it $(CONTAINER_NAME) bash

@@ -4,5 +4,5 @@ WORKDIR /build/
 RUN pip install -r requirements.txt
 WORKDIR /mnt/
 COPY setup.py tox.ini myproject.toml /mnt/
-COPY ../mlfaker /mnt/
+COPY ./mlfaker /mnt/mlfaker
 RUN pip install -e /mnt/

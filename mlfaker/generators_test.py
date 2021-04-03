@@ -15,14 +15,14 @@ def rand_sr():
 @pytest.fixture
 def base_gen():
     """Instatiated BaseGenerator"""
-    return BaseGenerator(name="foo", fillrate=0.5)
+    return BaseGenerator(name="foo", fillrate=0.5, seed=1)
 
 
 def test_base_generator():
     """Base class constructor test"""
     name = "databoi"
     fillrate = 1.0
-    b = BaseGenerator(name=name, fillrate=fillrate)
+    b = BaseGenerator(name=name, fillrate=fillrate, seed=1)
     assert b.fillrate == fillrate
     assert b.name == name
 

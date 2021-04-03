@@ -1,11 +1,12 @@
-from abc import abstractmethod
-from typing import Optional, Sequence, Union
+from abc import ABCMeta, abstractmethod
+from functools import partial
+from typing import Callable, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
 
 
-class BaseGenerator:
+class BaseGenerator(metaclass=ABCMeta):
     """Base class for the generators
 
     Includes some checks for fill rates and a _nuller static method
@@ -15,9 +16,14 @@ class BaseGenerator:
         fillrate: fillrate (1-fraction NaN)
     """
 
-    def __init__(self, name: str, fillrate: float):
+    generator_name = None
+
+    def __init__(self, name: str, fillrate: float, seed=1, **gen_kwargs):
         self.name = name
         self.fillrate = fillrate
+        self.seed = seed
+        self.rs = np.random.RandomState(seed)
+        self.generator = partial(getattr(self.rs, self.generator_name), **gen_kwargs)
 
     @property
     def fillrate(self):
@@ -33,43 +39,53 @@ class BaseGenerator:
         """Returns a nulled copy of a series"""
         sr = sr.copy()
         if self.fillrate != 1:
-            sr.loc[sr.sample(frac=1 - self.fillrate).index] = np.NaN
+            sr.loc[
+                sr.sample(frac=1 - self.fillrate, random_state=self.rs).index
+            ] = np.NaN
         return sr
 
-    @abstractmethod
-    def generate(self, length: int) -> pd.Series:
+    def generate(self, size: int) -> pd.Series:
         """Data generation method"""
-        raise NotImplementedError()
+        return self._nuller(pd.Series(self.generator(size=size), name=self.name))
 
 
-class NumGenerator(BaseGenerator):
+class NormalGenerator(BaseGenerator):
     """Numerical (normally distributed) data generator
 
     Args:
         name: name for the generated data (series)
         fillrate: fillrate (1-fraction NaN)
-        mu: mean value
-        sig: standard deviation
+        loc: mean value
+        scale: standard deviation
     """
 
+    generator_name = "normal"
+
     def __init__(
-        self, name: str, fillrate: float = 1.0, mu: float = 0.0, sig: float = 1.0
+        self, name: str, fillrate: float = 1.0, loc: float = 0.0, scale: float = 1.0
     ):
-        super().__init__(name, fillrate)
-        self.mu = mu
-        self.sig = sig
-
-    def generate(self, length: int) -> pd.Series:
-        """Generates numerical data series"""
-        self.value = self._nuller(
-            pd.Series(np.random.normal(self.mu, self.sig, length), name=self.name)
-        )
-        return self._nuller(
-            pd.Series(np.random.normal(self.mu, self.sig, length), name=self.name)
-        )
+        super().__init__(name, fillrate, loc=loc, scale=scale)
 
 
-class CatGenerator(BaseGenerator):
+class NormalGenerator(BaseGenerator):
+    """Numerical (normally distributed) data generator
+
+    Args:
+        name: name for the generated data (series)
+        fillrate: fillrate (1-fraction NaN)
+        loc: mean value
+        scale: standard deviation
+    """
+
+    generator_name = "normal"
+
+    def __init__(
+        self, name: str, fillrate: float = 1.0, loc: float = 0.0, scale: float = 1.0
+    ):
+        super().__init__(name, fillrate, loc=loc, scale=scale)
+
+
+class CategorialGenerator(BaseGenerator):
     """Categorical data generator
 
     Args:
@@ -79,6 +95,8 @@ class CatGenerator(BaseGenerator):
         rates: rates of the classes, e.g., [0.1, 0.9]
     """
 
+    generator_name = "choice"
+
     def __init__(
         self,
         name: str,
@@ -86,7 +104,6 @@ class CatGenerator(BaseGenerator):
         classes: Union[Sequence[int], Sequence[str]] = [0, 1],
         rates: Optional[Sequence[float]] = None,
     ):
-        super().__init__(name, fillrate)
         if rates is not None and len(classes) != len(rates):
             raise ValueError(
                 "The number of classes much match the rate array of probabilities"
@@ -94,11 +111,4 @@ class CatGenerator(BaseGenerator):
         else:
             self.rates = rates
         self.classes = classes
-
-    def generate(self, length) -> pd.Series:
-        """Generate categorical data series"""
-        return self._nuller(
-            pd.Series(
-                np.random.choice(self.classes, length, p=self.rates), name=self.name
-            )
-        )
+        super().__init__(name, fillrate, a=classes, p=rates)

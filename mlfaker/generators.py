@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from functools import partial
 from typing import Optional, Sequence, Union
 
@@ -15,15 +16,16 @@ class BaseGenerator:
         fillrate: fillrate (1-fraction NaN)
     """
 
-    def __init__(
-        self, generator_name, data_name: str, fillrate: float, seed=1, **gen_kwargs
-    ):
+    def __init__(self, data_name: str, fillrate: float, seed=1, **gen_kwargs):
+        # def __init__(
+        # self, generator_name, data_name: str, fillrate: float, seed=1, **gen_kwargs
+        # ):
         self.data_name = data_name
         self.fillrate = fillrate
         self.seed = seed
         self.rs = np.random.RandomState(seed)
-        self.gen_kwargs = gen_kwargs
-        self.generator_name = generator_name
+        # self.gen_kwargs = gen_kwargs
+        # self.generator_name = generator_name
 
     @property
     def fillrate(self):
@@ -44,12 +46,20 @@ class BaseGenerator:
             ] = np.NaN
         return sr
 
+    # def generate(self, size: int) -> pd.Series:
+    # """Data generation method"""
+    # generator = partial(getattr(self.rs, self.generator_name), **self.gen_kwargs)
+    # return self._nuller(pd.Series(generator(size=size), name=self.data_name))
+
+    def _generate(self, generator_name, size: int, **kwargs) -> pd.Series:
+        """Data generation method"""
+        generator = partial(getattr(self.rs, generator_name), **kwargs)
+        return self._nuller(pd.Series(generator(size=size), name=self.data_name))
+
+    @abstractmethod
     def generate(self, size: int) -> pd.Series:
         """Data generation method"""
-        if self.generator_name == "None":
-            raise ValueError("Generator not set")
-        generator = partial(getattr(self.rs, self.generator_name), **self.gen_kwargs)
-        return self._nuller(pd.Series(generator(size=size), name=self.data_name))
+        raise NotImplementedError()
 
 
 class NormalGenerator(BaseGenerator):
@@ -62,6 +72,8 @@ class NormalGenerator(BaseGenerator):
         scale: standard deviation
     """
 
+    generator_name = "normal"
+
     def __init__(
         self,
         data_name: str,
@@ -71,12 +83,17 @@ class NormalGenerator(BaseGenerator):
         seed: int = 1,
     ):
         super().__init__(
-            generator_name="normal",
             data_name=data_name,
             fillrate=fillrate,
             seed=seed,
-            loc=loc,
-            scale=scale,
+        )
+        self.loc = loc
+        self.scale = scale
+
+    def generate(self, size: int) -> pd.Series:
+        """Data generation method"""
+        return super()._generate(
+            self.generator_name, size=size, loc=self.loc, scale=self.scale
         )
 
 
@@ -89,6 +106,8 @@ class CategoricalGenerator(BaseGenerator):
         classes: categorical class, e.g. ["foo", "bar"] or [0, 1, 3]
         rates: rates of the classes, e.g., [0.1, 0.9]
     """
+
+    generator_name = "choice"
 
     def __init__(
         self,
@@ -106,10 +125,13 @@ class CategoricalGenerator(BaseGenerator):
             self.rates = rates
         self.classes = classes
         super().__init__(
-            generator_name="choice",
             data_name=data_name,
             fillrate=fillrate,
             seed=seed,
-            a=classes,
-            p=rates,
+        )
+
+    def generate(self, size: int) -> pd.Series:
+        """Data generation method"""
+        return super()._generate(
+            self.generator_name, size=size, a=self.classes, p=self.rates
         )

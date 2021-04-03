@@ -11,14 +11,12 @@ class BaseGenerator:
     Includes some checks for fill rates and a _nuller static method
 
     Args:
-        name: name for the generated data
+        data_name: name for the generated data
         fillrate: fillrate (1-fraction NaN)
     """
 
-    generator_name = "None"
-
-    def __init__(self, name: str, fillrate: float, seed=1, **gen_kwargs):
-        self.name = name
+    def __init__(self, data_name: str, fillrate: float, seed=1, **gen_kwargs):
+        self.data_name = data_name
         self.fillrate = fillrate
         self.seed = seed
         self.rs = np.random.RandomState(seed)
@@ -45,17 +43,17 @@ class BaseGenerator:
 
     def generate(self, size: int) -> pd.Series:
         """Data generation method"""
-        if self.generator_name == "None":
-            raise ValueError("Generator not set")
+        # if self.generator_name == "None":
+        # raise ValueError("Generator not set")
         generator = partial(getattr(self.rs, self.generator_name), **self.gen_kwargs)
-        return self._nuller(pd.Series(generator(size=size), name=self.name))
+        return self._nuller(pd.Series(generator(size=size), name=self.data_name))
 
 
 class NormalGenerator(BaseGenerator):
     """Normally data generator
 
     Args:
-        name: name for the generated data (series)
+        data_name: name for the generated data (series)
         fillrate: fillrate (1-fraction NaN)
         loc: mean value
         scale: standard deviation
@@ -65,20 +63,20 @@ class NormalGenerator(BaseGenerator):
 
     def __init__(
         self,
-        name: str,
+        data_name: str,
         fillrate: float = 1.0,
         loc: float = 0.0,
         scale: float = 1.0,
         seed: int = 1,
     ):
-        super().__init__(name, fillrate, seed=seed, loc=loc, scale=scale)
+        super().__init__(data_name, fillrate, seed=seed, loc=loc, scale=scale)
 
 
 class CategoricalGenerator(BaseGenerator):
     """Categorical data generator
 
     Args:
-        name: name for the generated data (series)
+        data_name: name for the generated data (series)
         fillrate: fillrate (1-fraction NaN)
         classes: categorical class, e.g. ["foo", "bar"] or [0, 1, 3]
         rates: rates of the classes, e.g., [0.1, 0.9]
@@ -88,7 +86,7 @@ class CategoricalGenerator(BaseGenerator):
 
     def __init__(
         self,
-        name: str,
+        data_name: str,
         fillrate: float = 1,
         classes: Union[Sequence[int], Sequence[str]] = [0, 1],
         rates: Optional[Sequence[float]] = None,
@@ -101,4 +99,4 @@ class CategoricalGenerator(BaseGenerator):
         else:
             self.rates = rates
         self.classes = classes
-        super().__init__(name, fillrate, seed=seed, a=classes, p=rates)
+        super().__init__(data_name, fillrate, seed=seed, a=classes, p=rates)

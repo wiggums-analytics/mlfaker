@@ -15,25 +15,25 @@ def rand_sr():
 @pytest.fixture
 def base_gen():
     """Instatiated BaseGenerator"""
-    return BaseGenerator(name="foo", fillrate=0.5, seed=1)
+    return BaseGenerator(data_name="foo", fillrate=0.5, seed=1)
 
 
 def test_base_generator():
     """Base class constructor test"""
     name = "databoi"
     fillrate = 1.0
-    b = BaseGenerator(name=name, fillrate=fillrate, seed=1)
+    b = BaseGenerator(data_name=name, fillrate=fillrate, seed=1)
     assert b.fillrate == fillrate
-    assert b.name == name
+    assert b.data_name == name
 
 
 def test_bad_fillrate_init():
     """Test fill rate between 0 and 1 in init"""
     with pytest.raises(ValueError):
-        BaseGenerator(name="foo", fillrate=10)
+        BaseGenerator(data_name="foo", fillrate=10)
 
     with pytest.raises(ValueError):
-        BaseGenerator(name="foo", fillrate=-1)
+        BaseGenerator(data_name="foo", fillrate=-1)
 
 
 def test_bad_fillrate_set(base_gen):

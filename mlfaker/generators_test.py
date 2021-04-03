@@ -3,7 +3,7 @@ import pandas as pd
 import pandas.api.types as ptypes
 import pytest
 
-from mlfaker.generators import BaseGenerator, CatGenerator, NumGenerator
+from mlfaker.generators import BaseGenerator, CategoricalGenerator, NormalGenerator
 
 
 @pytest.fixture
@@ -54,19 +54,19 @@ def test_nuller(base_gen, rand_sr):
 
 
 @pytest.mark.parametrize(
-    "gen, length, tcheck",
+    "gen, size, tcheck",
     [
-        (NumGenerator("foo", 0.5), 18, ptypes.is_numeric_dtype),
-        (CatGenerator("foo", 0.5, classes=[1, 2]), 11, ptypes.is_numeric_dtype),
+        (NormalGenerator("foo", 0.5), 18, ptypes.is_numeric_dtype),
+        (CategoricalGenerator("foo", 0.5, classes=[1, 2]), 11, ptypes.is_numeric_dtype),
         (
-            CatGenerator("foo", 0.5, classes=["bam", "booz", "led"]),
+            CategoricalGenerator("foo", 0.5, classes=["bam", "booz", "led"]),
             13,
             ptypes.is_string_dtype,
         ),
     ],
 )
-def test_numerical_generator(gen, length, tcheck):
-    """Test length and type of generated data"""
-    out = gen.generate(length)
+def test_numerical_generator(gen, size, tcheck):
+    """Test size and type of generated data"""
+    out = gen.generate(size)
     assert tcheck(out)
-    assert len(out) == length
+    assert len(out) == size

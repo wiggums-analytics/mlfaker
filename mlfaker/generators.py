@@ -1,12 +1,11 @@
-from abc import ABCMeta, abstractmethod
 from functools import partial
-from typing import Callable, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
 
 
-class BaseGenerator(metaclass=ABCMeta):
+class BaseGenerator:
     """Base class for the generators
 
     Includes some checks for fill rates and a _nuller static method
@@ -16,14 +15,14 @@ class BaseGenerator(metaclass=ABCMeta):
         fillrate: fillrate (1-fraction NaN)
     """
 
-    generator_name = None
+    generator_name = "None"
 
     def __init__(self, name: str, fillrate: float, seed=1, **gen_kwargs):
         self.name = name
         self.fillrate = fillrate
         self.seed = seed
         self.rs = np.random.RandomState(seed)
-        self.generator = partial(getattr(self.rs, self.generator_name), **gen_kwargs)
+        self.gen_kwargs = gen_kwargs
 
     @property
     def fillrate(self):
@@ -46,11 +45,14 @@ class BaseGenerator(metaclass=ABCMeta):
 
     def generate(self, size: int) -> pd.Series:
         """Data generation method"""
-        return self._nuller(pd.Series(self.generator(size=size), name=self.name))
+        if self.generator_name == "None":
+            raise ValueError("Generator not set")
+        generator = partial(getattr(self.rs, self.generator_name), **self.gen_kwargs)
+        return self._nuller(pd.Series(generator(size=size), name=self.name))
 
 
 class NormalGenerator(BaseGenerator):
-    """Numerical (normally distributed) data generator
+    """Normally data generator
 
     Args:
         name: name for the generated data (series)
@@ -62,30 +64,17 @@ class NormalGenerator(BaseGenerator):
     generator_name = "normal"
 
     def __init__(
-        self, name: str, fillrate: float = 1.0, loc: float = 0.0, scale: float = 1.0
+        self,
+        name: str,
+        fillrate: float = 1.0,
+        loc: float = 0.0,
+        scale: float = 1.0,
+        seed: int = 1,
     ):
-        super().__init__(name, fillrate, loc=loc, scale=scale)
+        super().__init__(name, fillrate, seed=seed, loc=loc, scale=scale)
 
 
-class NormalGenerator(BaseGenerator):
-    """Numerical (normally distributed) data generator
-
-    Args:
-        name: name for the generated data (series)
-        fillrate: fillrate (1-fraction NaN)
-        loc: mean value
-        scale: standard deviation
-    """
-
-    generator_name = "normal"
-
-    def __init__(
-        self, name: str, fillrate: float = 1.0, loc: float = 0.0, scale: float = 1.0
-    ):
-        super().__init__(name, fillrate, loc=loc, scale=scale)
-
-
-class CategorialGenerator(BaseGenerator):
+class CategoricalGenerator(BaseGenerator):
     """Categorical data generator
 
     Args:
@@ -103,6 +92,7 @@ class CategorialGenerator(BaseGenerator):
         fillrate: float = 1,
         classes: Union[Sequence[int], Sequence[str]] = [0, 1],
         rates: Optional[Sequence[float]] = None,
+        seed: int = 1,
     ):
         if rates is not None and len(classes) != len(rates):
             raise ValueError(
@@ -111,4 +101,4 @@ class CategorialGenerator(BaseGenerator):
         else:
             self.rates = rates
         self.classes = classes
-        super().__init__(name, fillrate, a=classes, p=rates)
+        super().__init__(name, fillrate, seed=seed, a=classes, p=rates)

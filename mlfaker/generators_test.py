@@ -9,20 +9,20 @@ from mlfaker.generators import BaseGenerator, CategoricalGenerator, NormalGenera
 @pytest.fixture
 def rand_sr():
     """Random normally distributed series"""
-    return pd.Series(np.random.normal(0, 1, 10), name="test")
+    return pd.Series(np.random.RandomState(seed=1).normal(0, 1, 10), name="test")
 
 
 @pytest.fixture
 def base_gen():
     """Instatiated BaseGenerator"""
-    return BaseGenerator(generator_name="blah", data_name="foo", fillrate=0.5, seed=1)
+    return BaseGenerator(data_name="foo", fillrate=0.5, seed=1)
 
 
 def test_base_generator():
     """Base class constructor test"""
     name = "databoi"
     fillrate = 1.0
-    b = BaseGenerator(generator_name="blah", data_name=name, fillrate=fillrate, seed=1)
+    b = BaseGenerator(data_name=name, fillrate=fillrate, seed=1)
     assert b.fillrate == fillrate
     assert b.data_name == name
 
@@ -30,10 +30,10 @@ def test_base_generator():
 def test_bad_fillrate_init():
     """Test fill rate between 0 and 1 in init"""
     with pytest.raises(ValueError):
-        BaseGenerator(generator_name="blah", data_name="foo", fillrate=10)
+        BaseGenerator(data_name="foo", fillrate=10, seed=1)
 
     with pytest.raises(ValueError):
-        BaseGenerator(generator_name="blah", data_name="foo", fillrate=-1)
+        BaseGenerator(data_name="foo", fillrate=-1, seed=1)
 
 
 def test_bad_fillrate_set(base_gen):
@@ -70,3 +70,8 @@ def test_numerical_generator(gen, size, tcheck):
     out = gen.generate(size)
     assert tcheck(out)
     assert len(out) == size
+
+
+def test_raise_classes_rate():
+    with pytest.raises(ValueError):
+        CategoricalGenerator(data_name="foo", classes=[0, 1, 2], rates=[0.2, 0.3])

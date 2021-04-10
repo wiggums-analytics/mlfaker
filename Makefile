@@ -32,7 +32,7 @@ ci: ci-black ci-flake8 ci-test ci-mypy ## Check black, flake8, and run unit test
 	@echo "CI successful"
 
 isort: dev-start  ## Runs isort to sorts imports
-	docker exec -t $(CONTAINER_NAME) isort -rc $(PROJ_DIR)
+	docker exec -t $(CONTAINER_NAME) isort $(PROJ_DIR)
 
 black: dev-start ## Runs black auto-linter
 	docker exec -t $(CONTAINER_NAME) black $(PROJ_DIR)
